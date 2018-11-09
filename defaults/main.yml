@@ -1,2 +1,20 @@
 ---
 # defaults file for ansible-role-openshift-images
+
+_all_json_files: []
+
+ocp_ver: '3.11'
+work_dir: '/tmp'
+image_repo:
+  name: "openshift-ansible"
+  source: "https://github.com/openshift/openshift-ansible.git"
+  branch: "release-{{ocp_ver}}"
+  files: 
+    - 'roles/openshift_examples/files/examples/latest/image-streams/image-streams-rhel7.json'
+    - 'roles/openshift_examples/files/examples/latest/image-streams/dotnet_imagestreams.json'
+  paths: 
+    - 'roles/openshift_examples/files/examples/latest/xpaas-streams/'
+    - 'roles/openshift_examples/files/examples/latest/xpaas-templates/'
+    - 'roles/openshift_examples/files/examples/latest/quickstart-templates/'
+    - 'roles/openshift_examples/files/examples/latest/db-templates/'
+
