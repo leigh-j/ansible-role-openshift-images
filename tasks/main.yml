@@ -1,49 +1,8 @@
 ---
-# tasks file for ansible-role-openshift-image
 
-- name: ensure work dir present
-  file: 
-    path: "{{ work_dir }}"
-    state: directory
-
-- name: clone openshift-ansible repo
-  git:
-    repo: "{{ image_repo.source }}"
-    dest: "{{ work_dir }}/{{image_repo.name}}"
-    version: "{{ image_repo.branch }}"
-    update: yes
-
-- name: collect specified files
-  set_fact: 
-    _all_json_files: "{{_all_json_files}} + ['{{ work_dir }}/{{image_repo.name}}/{{item}}']"
-  loop: "{{ image_repo.files }}"
-
-- name: get all json image-stream definitions
-  find: 
-    paths: "{{ work_dir }}/{{image_repo.name}}/{{item}}"
-    recurse: yes
-    size: '128b'
-    patterns: '*.json,*.yml,*.yaml'
-  register: json_files
-  loop: "{{ image_repo.paths }}"
-
-- name: collect specified files
-  set_fact: 
-    _all_json_files: "{{_all_json_files}} + ['{{item.1.path}}']"
-  loop: "{{ json_files.results|subelements('files') }}"
-  changed_when: False
-
-- name: extract the images
-  include_tasks: parse_json.yml
-  loop: "{{ _all_json_files }}"
+- name: iterate over all the repos
+  include_tasks: repo.yml
+  loop: "{{ image_repos|dict2items }}"
   loop_control:
-    loop_var: repo_file
-
-- name: pretty the list
-  set_fact:
-    repo_images: "{{ repo_images|sort|unique }}"
-- name: debug
-  debug:
-    var: repo_images
-    verbosity: 0
+    loop_var: image_repo
 

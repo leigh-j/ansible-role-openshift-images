@@ -40,7 +40,9 @@
 - name: collect stream images
   set_fact:
     repo_images: "{{ repo_images| default([]) }} + ['{{item.from.name}}']"
-  when: item.from.kind == "DockerImage"
+  when: 
+    - item.from is defined
+    - item.from.kind == "DockerImage"
   loop: "{{ stream_vars|default([]) }}"
 
 - name: collect template images
