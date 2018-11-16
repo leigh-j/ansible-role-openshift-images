@@ -45,5 +45,5 @@
 - name: debug
   debug:
     var: repo_images
-    verbosity: 0
+    verbosity: 1
 
