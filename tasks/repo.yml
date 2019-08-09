@@ -23,25 +23,44 @@
     paths: "{{ work_dir }}/{{image_repo.key}}/{{item}}"
     recurse: yes
     size: '128b'
-    patterns: '*.json,*.yml,*.yaml'
+    patterns: '*.json'
   register: json_files
   loop: "{{ image_repo.value.paths }}"
 
+
+- name: get all yml image-stream definitions
+  find:
+    paths: "{{ work_dir }}/{{image_repo.key}}/{{item}}"
+    recurse: yes
+    size: '128b'
+    patterns: '*.yml,*.yaml'
+  register: yaml_files
+  loop: "{{ image_repo.value.paths }}"
+
+
 - name: collect specified files
   set_fact: 
-    _all_json_files: "{{_all_json_files}} + ['{{item.1.path}}']"
+    all_json_files: "{{all_json_files|default([]) }} + ['{{item.1.path}}']"
   loop: "{{ json_files.results|subelements('files') }}"
   changed_when: False
 
-- name: extract the images
+- name: extract the json images
   include_tasks: parse_json.yml
-  loop: "{{ _all_json_files }}"
+  loop: "{{ all_json_files }}"
   loop_control:
     loop_var: repo_file
+
+- name: extract the yaml images
+  include_tasks: parse_yaml.yml
+  loop: "{{ yaml_files.results|subelements('files') }}"
+  loop_control:
+    loop_var: repo_file
+  when: yaml_files.results is defined
 
 - name: pretty the list
   set_fact:
     repo_images: "{{ repo_images|sort|unique }}"
+
 - name: debug
   debug:
     var: repo_images
