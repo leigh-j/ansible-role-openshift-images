@@ -6,56 +6,38 @@
     path: "{{ work_dir }}"
     state: directory
 
-- name: clone openshift-ansible repo
+- name: clone kube repo
   git:
-    repo: "{{ image_repo.value.source }}"
-    dest: "{{ work_dir }}/{{image_repo.key}}"
-    version: "{{ image_repo.value.branch }}"
+    repo: "{{ image_repo.source }}"
+    dest: "{{ work_dir }}/{{image_repo.name}}"
+    version: "{{ image_repo.branch }}"
     update: yes
 
-- name: collect specified files
-  set_fact: 
-    _all_json_files: "{{_all_json_files}} + ['{{ work_dir }}/{{image_repo.key}}/{{item}}']"
-  loop: "{{ image_repo.value.files }}"
-
-- name: get all json image-stream definitions
+- name: get all image-stream definitions from paths
   find: 
-    paths: "{{ work_dir }}/{{image_repo.key}}/{{item}}"
+    paths: "{{ work_dir }}/{{image_repo.name}}/{{item}}"
     recurse: yes
     size: '128b'
-    patterns: '*.json'
-  register: json_files
-  loop: "{{ image_repo.value.paths }}"
+    patterns: '*.json,*.yml,*.yaml'
+  register: _all_files
+  loop: "{{ image_repo.paths|default('/') }}"
 
-
-- name: get all yml image-stream definitions
-  find:
-    paths: "{{ work_dir }}/{{image_repo.key}}/{{item}}"
-    recurse: yes
-    size: '128b'
-    patterns: '*.yml,*.yaml'
-  register: yaml_files
-  loop: "{{ image_repo.value.paths }}"
-
+- name: add all specified files
+  set_fact:
+    all_files: "{{all_files|default([]) }} + ['{{ work_dir }}/{{image_repo.name}}/{{item}}']"
+  loop: "{{ image_repo.files | default([]) }}"
 
 - name: collect specified files
   set_fact: 
-    all_json_files: "{{all_json_files|default([]) }} + ['{{item.1.path}}']"
-  loop: "{{ json_files.results|subelements('files') }}"
+    all_files: "{{all_files|default([]) }} + ['{{item.1.path}}']"
+  loop: "{{ q( 'subelements', _all_files.results, 'files', {'skip_missing': True}) }}"
   changed_when: False
 
-- name: extract the json images
-  include_tasks: parse_json.yml
-  loop: "{{ all_json_files }}"
+- name: extract the images
+  include_tasks: parse.yml
+  loop: "{{ all_files }}"
   loop_control:
     loop_var: repo_file
-
-- name: extract the yaml images
-  include_tasks: parse_yaml.yml
-  loop: "{{ yaml_files.results|subelements('files') }}"
-  loop_control:
-    loop_var: repo_file
-  when: yaml_files.results is defined
 
 - name: pretty the list
   set_fact:

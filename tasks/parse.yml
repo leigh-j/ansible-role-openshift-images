@@ -34,7 +34,7 @@
     var: "{{ item }}"
     verbosity: 2
   loop:
-    - stream_vars
+    #- stream_vars
     - template_vars
 
 - name: collect stream images

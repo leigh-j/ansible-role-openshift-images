@@ -2,7 +2,7 @@
 
 - name: iterate over all the repos
   include_tasks: repo.yml
-  loop: "{{ image_repos|dict2items }}"
+  loop: "{{ image_repos }}"
   loop_control:
     loop_var: image_repo
 
