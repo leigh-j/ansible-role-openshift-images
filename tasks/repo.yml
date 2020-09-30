@@ -27,7 +27,7 @@
 - name: asdad
   debug:
     var: repo_images
-    verbosity: 1
+    verbosity: 2
 
 - name: pretty the list
   set_fact:
@@ -36,7 +36,7 @@
 - name: debug
   debug:
     var: repo_images
-    verbosity: 0
+    verbosity: 1
 
 - name: import
   command: "skopeo copy docker://{{ item }} docker://{{mirror_registry}}/{{ item }} --authfile /var/lib/import/auth.json --insecure-policy"
