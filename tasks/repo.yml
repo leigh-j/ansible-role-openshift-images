@@ -2,7 +2,7 @@
 # tasks file for ansible-role-openshift-image
 
 - name: ensure work dir present
-  file: 
+  file:
     path: "{{ work_dir }}"
     state: directory
 
@@ -14,30 +14,20 @@
     update: yes
 
 - name: get all image-stream definitions from paths
-  find: 
-    paths: "{{ work_dir }}/{{image_repo.name}}/{{item}}"
-    recurse: yes
-    size: '128b'
-    patterns: '*.json,*.yml,*.yaml'
-  register: _all_files
-  loop: "{{ image_repo.paths|default('/') }}"
-
-- name: add all specified files
   set_fact:
-    all_files: "{{all_files|default([]) }} + ['{{ work_dir }}/{{image_repo.name}}/{{item}}']"
-  loop: "{{ image_repo.files | default([]) }}"
+    #msg: "{{ lookup('file',item.src)| json_query('spec.tags[0]') }}"
+    repo_images: "{{(repo_images| default([])) + ((lookup('file',item.src) |from_json).spec.tags | json_query('[?from.kind==`DockerImage`].from.name')|list) }}"
+    verbosity: 0
+  with_filetree: "{{ work_dir}}/{{image_repo.name}}/{{image_repo.path }}"
+  when:
+    - item.state == 'file'
+    - item.src is regex(".*imagestreams.*.json")
+    - item.src is not regex(".*jenkins.*")
 
-- name: collect specified files
-  set_fact: 
-    all_files: "{{all_files|default([]) }} + ['{{item.1.path}}']"
-  loop: "{{ q( 'subelements', _all_files.results, 'files', {'skip_missing': True}) }}"
-  changed_when: False
-
-- name: extract the images
-  include_tasks: parse.yml
-  loop: "{{ all_files }}"
-  loop_control:
-    loop_var: repo_file
+- name: asdad
+  debug:
+    var: repo_images
+    verbosity: 1
 
 - name: pretty the list
   set_fact:
@@ -46,5 +36,9 @@
 - name: debug
   debug:
     var: repo_images
-    verbosity: 1
+    verbosity: 0
+
+- name: import
+  command: "skopeo copy docker://{{ item }} docker://{{mirror_registry}}/{{ item }} --authfile /var/lib/import/auth.json --insecure-policy"
+  loop: "{{ repo_images }}"
 
