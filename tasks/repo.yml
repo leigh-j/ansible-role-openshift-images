@@ -39,6 +39,6 @@
     verbosity: 1
 
 - name: import
-  command: "skopeo copy docker://{{ item }} docker://{{mirror_registry}}/{{ item }} --authfile /var/lib/import/auth.json --insecure-policy"
+  command: "skopeo copy docker://{{ item }} docker://{{mirror_registry}}/{{ item }} --authfile {{ auth_file }} --insecure-policy --all"
   loop: "{{ repo_images }}"
 

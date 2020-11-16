@@ -4,7 +4,7 @@
 _all_json_files: []
 
 work_dir: '/tmp'
-
+auth_file: '~/auth.json'
 image_repos:
   openshift_ansible:
     source: "https://github.com/openshift/openshift-ansible.git"
